@@ -18,9 +18,11 @@ func TestWWW(t *testing.T) {
 
     fileName := `Эдгар Аллан По Сердце-обличитель.txt`
     fileName2 := `Edgar Allan Poe The Cask of Amontillado.txt`
+    fileName3 := `master-i-margarita.txt`
     filePath := `testdata\` + fileName
     filePath2 := `testdata\` + fileName2
-
+    filePath3 := `testdata\` + fileName3
+    
     cl := NewClient().WithTimeout(2 * time.Second)
 
     t.Run("DELETE", func(t *testing.T) {
@@ -150,12 +152,14 @@ func TestWWW(t *testing.T) {
 
         t.Run("FILE", func(t *testing.T) {
 
-            reader := MustOpen(filePath)
+            reader := MustOpen(filePath3)
 
             r := NewRequest(cl)
             resp := r.WithQuery(params).
                 WithFile(reader).
-                Post("https://httpbin.org/post", headers)
+                Post("https://httpbin.org/post", 
+                    http.Header{"Content-Type": {"text/plain; charset=windows-1251"}},
+                )
 
             if resp.Error() != nil {
                 t.Errorf("%v", resp.Error())

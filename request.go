@@ -90,15 +90,16 @@ func (r *Request) prepareRequest(
 	}
 
 	r.Request.URL.RawQuery = r.params
-
-	if len(headers) > 0 {
-		for key, val := range headers[0] {
-			r.Request.Header.Add(key, val[0])
-		}
-	}
-	if r.mime != "" {
+    if r.mime != "" {
 		r.Request.Header.Set("Content-Type", r.mime)
 	}
+	
+    if len(headers) > 0 {
+		for key, val := range headers[0] {
+			r.Request.Header.Set(key, val[0])
+		}
+	}
+	
 }
 
 func (r *Request) Get(uri string, headers ...http.Header) *Response {
