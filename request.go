@@ -3,6 +3,7 @@ package www
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	//"fmt"
 	"mime/multipart"
@@ -13,9 +14,11 @@ import (
 	"strings"
 )
 
+var ErrorEmptyListValues = errors.New("An empty list of values is passed to create multipart content")
+
 type Request struct {
 	*http.Request
-	client  *StandartClient
+	client  *StandardClient
 	err     error
 	body    io.Reader
 	params  string
@@ -23,7 +26,7 @@ type Request struct {
 	cookies []*http.Cookie
 }
 
-func NewRequest(client *StandartClient) *Request {
+func NewRequest(client *StandardClient) *Request {
 	return &Request{client: client}
 }
 
@@ -90,16 +93,16 @@ func (r *Request) prepareRequest(
 	}
 
 	r.Request.URL.RawQuery = r.params
-    if r.mime != "" {
+	if r.mime != "" {
 		r.Request.Header.Set("Content-Type", r.mime)
 	}
-	
-    if len(headers) > 0 {
+
+	if len(headers) > 0 {
 		for key, val := range headers[0] {
 			r.Request.Header.Set(key, val[0])
 		}
 	}
-	
+
 }
 
 func (r *Request) Get(uri string, headers ...http.Header) *Response {
@@ -179,7 +182,7 @@ func (r *Request) WithForm(data *url.Values) *Request {
 	return r
 }
 
-func (r *Request) WithJson(data interface{}) *Request {
+func (r *Request) Json(data interface{}) *Request {
 
 	body, err := json.Marshal(data)
 	if err != nil {
@@ -191,8 +194,8 @@ func (r *Request) WithJson(data interface{}) *Request {
 	return r
 }
 
-func (r *Request) WithJSON(data interface{}) *Request {
-	return r.WithJson(data)
+func (r *Request) JSON(data interface{}) *Request {
+	return r.Json(data)
 }
 
 func (r *Request) WithFile(reader io.Reader) *Request {
@@ -201,7 +204,7 @@ func (r *Request) WithFile(reader io.Reader) *Request {
 	return r
 }
 
-func (r *Request) AttachFile(reader io.Reader) *Request {
+func (r *Request) AttachFile(reader io.Reader, contentType ...string) *Request {
 	var err error
 	var fileName string
 	var part io.Writer
@@ -216,9 +219,10 @@ func (r *Request) AttachFile(reader io.Reader) *Request {
 
 	body := &bytes.Buffer{}
 
-	mpWriter := multipart.NewWriter(body)
+	writer := multipart.NewWriter(body)
 
-	if part, err = mpWriter.CreateFormFile("file", fileName); err != nil {
+	if part, err = CreateFormFile(
+		writer, "file", fileName, contentType...); err != nil {
 		r.err = err
 		return r
 	}
@@ -230,31 +234,53 @@ func (r *Request) AttachFile(reader io.Reader) *Request {
 		return r
 	}
 
-	r.mime = mpWriter.FormDataContentType()
-	mpWriter.Close()
+	r.mime = writer.FormDataContentType()
+	writer.Close()
 	r.body = body
 
 	return r
 }
 
-func (r *Request) AttachFiles(files map[string]io.Reader) *Request {
+func (r *Request) AttachFiles(files map[string][]interface{}) *Request {
 
-	var err error
-	var fileName string
-	var part io.Writer
+	var (
+		err         error
+		fileName    string
+		contentType string
+		part        io.Writer
+	)
 
 	body := &bytes.Buffer{}
 
 	writer := multipart.NewWriter(body)
 
-	for field, reader := range files {
+	for field, values := range files {
+		if len(values) == 0 {
+			r.err = ErrorEmptyListValues
+			return r
+		}
+		reader, ok := values[0].(io.Reader)
+		if !ok {
+            r.err = errors.New("value is not an interface io.Reader")
+            continue
+        }
+        
+        if len(values) > 1 {
+			contentType, ok = values[1].(string)
+            if !ok {
+                r.err = errors.New("value is not a string")
+                continue
+            }
+        }
+
 		if f, ok := reader.(*os.File); ok {
 			fileName = filepath.Base(f.Name())
 			defer func(reader io.Reader) {
 				closeReader(reader)
 			}(reader)
 
-			if part, err = writer.CreateFormFile(field, fileName); err != nil {
+			if part, err = CreateFormFile(
+				writer, field, fileName, contentType); err != nil {
 				r.err = err
 				//closeReader(reader)
 				continue

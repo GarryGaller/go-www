@@ -1,7 +1,6 @@
 package www
 
 import (
-    "io"
     "net/http"
     "net/http/cookiejar"
     "net/url"
@@ -16,14 +15,14 @@ func TestWWW(t *testing.T) {
     params := &url.Values{"key": {"value"}}
     data := &url.Values{"key2": {"value2"}}
 
-    fileName := `Эдгар Аллан По Сердце-обличитель.txt`
-    fileName2 := `Edgar Allan Poe The Cask of Amontillado.txt`
-    fileName3 := `master-i-margarita.txt`
+    fileName := `utf-8.txt`
+    fileName2 := `utf-8(2).txt`
+    fileName3 := `windows-1251.txt`
     filePath := `testdata\` + fileName
     filePath2 := `testdata\` + fileName2
     filePath3 := `testdata\` + fileName3
-    
-    cl := NewClient().WithTimeout(2 * time.Second)
+
+    cl := NewClient().With(2 * time.Second)
 
     t.Run("DELETE", func(t *testing.T) {
 
@@ -134,7 +133,7 @@ func TestWWW(t *testing.T) {
         t.Run("JSON", func(t *testing.T) {
             r := NewRequest(cl)
             resp := r.WithQuery(params).
-                WithJson(params).
+                JSON(params).
                 Post("https://httpbin.org/post", headers)
 
             if resp.Error() != nil {
@@ -157,7 +156,7 @@ func TestWWW(t *testing.T) {
             r := NewRequest(cl)
             resp := r.WithQuery(params).
                 WithFile(reader).
-                Post("https://httpbin.org/post", 
+                Post("https://httpbin.org/post",
                     http.Header{"Content-Type": {"text/plain; charset=windows-1251"}},
                 )
 
@@ -175,9 +174,9 @@ func TestWWW(t *testing.T) {
         })
 
         t.Run("AttachFile", func(t *testing.T) {
-            
+
             r := NewRequest(cl)
-            resp := r.AttachFile(MustOpen(filePath)).
+            resp := r.AttachFile(MustOpen(filePath), "text/plain; charset=utf-8").
                 Post("https://httpbin.org/post", headers)
 
             if resp.Error() != nil {
@@ -195,14 +194,14 @@ func TestWWW(t *testing.T) {
 
         t.Run("AttachFiles", func(t *testing.T) {
 
-            values := map[string]io.Reader{
-                "file":  MustOpen(filePath),
-                "file2": MustOpen(filePath2),
-                "other": strings.NewReader("hello world!"),
+            files := map[string][]interface{}{
+                "file":  {MustOpen(filePath), "text/plain; charset=utf-8"},
+                "file2": {MustOpen(filePath2), "text/plain; charset=utf-8"},
+                "other": {strings.NewReader("hello world!")},
             }
 
             r := NewRequest(cl)
-            resp := r.AttachFiles(values).
+            resp := r.AttachFiles(files).
                 Post("https://httpbin.org/post", headers)
 
             if resp.Error() != nil {
@@ -298,13 +297,13 @@ func TestWWW(t *testing.T) {
             Value:  "Galler",
             MaxAge: 300,
         })
-        req.WithQuery(&url.Values{"q": {"generics"}, "l":{"go"}, "type":{"topics"}})
+        req.WithQuery(&url.Values{"q": {"generics"}, "l": {"go"}, "type": {"topics"}})
         resp := req.Get("https://github.com/search",
-                http.Header{
-                     "User-Agent": {"Mozilla"},
-                    //"Accept": {"application/vnd.github.v3+json"},
-                    //"Authorization": {"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}},
-                })
+            http.Header{
+                "User-Agent": {"Mozilla"},
+                //"Accept": {"application/vnd.github.v3+json"},
+                //"Authorization": {"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}},
+            })
         t.Logf("%s", resp.Status)
         t.Logf("%s", resp.Headers())
     })

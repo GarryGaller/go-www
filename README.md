@@ -9,7 +9,8 @@ Simple http client for golang with user-friendly interface.
 - Timeout
 - Cookie
 - GZIP
-- Charset
+- Charset detection
+- Cleaned http client
 
 ## Installation
 
@@ -23,36 +24,62 @@ go get github.com/GarryGaller/go-www
 package main
 
 import (
-	"fmt"
-	"net/url"
+    "fmt"
+    "net/url"
 
-	"github.com/GarryGaller/go-www"
+    "github.com/GarryGaller/go-www"
 )
 
 func main() {
-	client := www.NewClient()
-	req := www.NewRequest(client)
-	resp := req.WithQuery(&url.Values{"key": {"value"}}).
-		Get("https://httpbin.org/get")
+    client := www.NewClient()
+    req := www.NewRequest(client)
+    resp := req.WithQuery(&url.Values{"key": {"value"}}).
+        Get("https://httpbin.org/get")
 
-	if resp.Error() != nil {
-		fmt.Printf("%v", resp.Error())
-	} else {
-		fmt.Printf("%s\n", resp.Status)
-		fmt.Printf("%s\n", resp.Text())
-	}
+    if resp.Error() != nil {
+        fmt.Printf("%v", resp.Error())
+    } else {
+        fmt.Printf("%s\n", resp.Status)
+        fmt.Printf("%s\n", resp.Text())
+    }
 
-	// or client and request in one step
-	resp = www.New().
-		WithQuery(&url.Values{"key": {"value"}}).
-		Get("https://httpbin.org/get")
+    // or cleaned client and request in one step
+    resp = www.New().
+        WithQuery(&url.Values{"key": {"value"}}).
+        Get("https://httpbin.org/get")
 
-	fmt.Printf("%s\n", resp.Status)
-	fmt.Printf("%s\n", resp.Text())
+    fmt.Printf("%s\n", resp.Status)
+    fmt.Printf("%s\n", resp.Text())
 }
 ```
 
 ## Usage
+
+
+### Client types
+
+```go
+
+// returns a new http.Client with similar default values to http.Client, but with a non-shared 
+// Transport, idle connections disabled, and keepalives disabled.
+cleanedClient := www.Cleaned()
+
+//returns a new http.Client with similar default values to
+// http.Client, but with a shared Transport. Do not use this function for
+// transient clients as it can leak file descriptors over time. Only use this
+// for clients that will be re-used for the same host(s).
+sharedClient := www.Pooled()
+
+// standard client &http.Client{}
+defaultClient := www.Default()
+
+// hand over your client or  or will be used &http.Client{}
+client := www.NewClient(...)
+
+// Returns the request object along with the cleaned client
+req := www.New()
+```
+
 
 ### Sending Request
 
@@ -72,7 +99,7 @@ req.WithForm(&url.Values{"token": {"123456"}}).
     Post("https://httpbin.org/post")
 
 // post file as data
-req.WithFile(MustOpen(filePath)).
+req.WithFile(MustOpen(filePath), "text/plain; charset=utf-8").
     Post("https://httpbin.org/post")
 
 // post file as multipart
@@ -80,9 +107,9 @@ req.AttachFile(MustOpen(filePath)).
     Post("https://httpbin.org/post"
 
 // post files(multipart)
-req.AttachFiles(map[string]io.Reader{
-    "file":  MustOpen(filePath),
-    "file2": MustOpen(filePath2),
+req.AttachFiles(map[string]interface{}{
+    "file":  {MustOpen(filePath), "text/plain; charset=utf-8"},
+    "file2": {MustOpen(filePath2),"text/plain; charset=utf-8"},
     "other": strings.NewReader("hello world!"),
     }).Post("https://httpbin.org/post")
 
@@ -107,6 +134,12 @@ client := www.NewClient()
 client.WithTimeout(2 * time.Second)
 jar, _ := cookiejar.New(nil)
 client.WithJar(jar)
+fmt.Printf("%s\n", client.Timeout)
+fmt.Printf("%#v\n", client.Jar)
+
+client = www.Cleaned().With(2 *time.Second, jar)
+fmt.Printf("%s\n", client.Timeout)
+fmt.Printf("%#v\n", client.Jar)
 
 req := www.NewRequest(client)
 req.WithQuery(&url.Values{"q": {"generics"}, "l":{"go"}, "type":{"topics"}})
@@ -118,8 +151,6 @@ resp := req.Get("https://github.com/search",
         })
 fmt.Printf("%s\n", resp.Status)
 fmt.Printf("%s\n", resp.Headers())
-    
-    
 ```
 
 ### Response
@@ -145,10 +176,6 @@ bodyAsMap = resp.Json()
 ### Error Checking
 
 ```go
-client := NewClient().WithTimeout(2 * time.Second)
-if client.Error() != nil {
-    fmt.Printf("%v\n", client.Error())
-}
 
 req := NewRequest(client)
 if req.Error() != nil {
