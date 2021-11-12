@@ -314,7 +314,7 @@ func BenchmarkWWW(b *testing.B) {
 
     headers := http.Header{"User-Agent": {"Mozilla"}}
 
-    fileName := `Эдгар Аллан По Сердце-обличитель.txt`
+    fileName := `utf-8.txt`
     filePath := `testdata\` + fileName
 
     cl := NewClient().WithTimeout(2 * time.Second)

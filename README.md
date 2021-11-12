@@ -110,7 +110,7 @@ req.AttachFile(MustOpen(filePath)).
 req.AttachFiles(map[string]interface{}{
     "file":  {MustOpen(filePath), "text/plain; charset=utf-8"},
     "file2": {MustOpen(filePath2),"text/plain; charset=utf-8"},
-    "other": strings.NewReader("hello world!"),
+    "other": {strings.NewReader("hello world!")},
     }).Post("https://httpbin.org/post")
 
 // delete
@@ -120,7 +120,7 @@ req.Delete("http://httpbin.org/delete")
 req.Head("http://httpbin.org/patch")
 
 // put
-req.Head("http://httpbin.org/put")
+req.Put("http://httpbin.org/put")
 
 ```
 

@@ -261,17 +261,17 @@ func (r *Request) AttachFiles(files map[string][]interface{}) *Request {
 		}
 		reader, ok := values[0].(io.Reader)
 		if !ok {
-            r.err = errors.New("value is not an interface io.Reader")
-            continue
-        }
-        
-        if len(values) > 1 {
+			r.err = errors.New("value is not an interface io.Reader")
+			continue
+		}
+
+		if len(values) > 1 {
 			contentType, ok = values[1].(string)
-            if !ok {
-                r.err = errors.New("value is not a string")
-                continue
-            }
-        }
+			if !ok {
+				r.err = errors.New("value is not a string")
+				continue
+			}
+		}
 
 		if f, ok := reader.(*os.File); ok {
 			fileName = filepath.Base(f.Name())
