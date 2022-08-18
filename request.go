@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-var ErrorEmptyListValues = errors.New("An empty list of values is passed to create multipart content")
+var ErrorEmptyListValues = errors.New("an empty list of values is passed to create multipart content")
 
 type Request struct {
 	*http.Request
@@ -27,42 +27,30 @@ type Request struct {
 }
 
 func NewRequest(client *StandardClient) *Request {
-	return &Request{client: client}
+	return &Request{
+		client: client,
+	}
 }
 
-func (r *Request) Error() error {
+func (r Request) Error() error {
 	return r.err
 }
 
-func (r *Request) Headers() (out http.Header) {
+func (r Request) Headers() (out http.Header) {
 	if r.Request != nil {
 		out = r.Request.Header
 	}
-	return
+
+	return out
 }
 
-func (r *Request) Cookies() (out []*http.Cookie) {
+func (r Request) Cookies() (out []*http.Cookie) {
 	if r.Request != nil {
 		out = r.Request.Cookies()
 	}
-	return
-}
 
-/*
-func (r *Request) SetHeaders(headers http.Header) *Request {
-    for key, val := range headers {
-        r.Request.Header.Set(key, val[0])
-    }
-    return r
+	return out
 }
-
-func (r *Request) AddHeaders(headers http.Header) *Request {
-    for key, val := range headers {
-        r.Request.Header.Add(key, val[0])
-    }
-    return r
-}
-*/
 
 func (r *Request) SetCookies(cookies ...*http.Cookie) *Request {
 	r.cookies = cookies
@@ -70,7 +58,6 @@ func (r *Request) SetCookies(cookies ...*http.Cookie) *Request {
 }
 
 func (r *Request) prepareCookies() {
-
 	for _, cookie := range r.cookies {
 		r.Request.AddCookie(cookie)
 	}
@@ -106,62 +93,63 @@ func (r *Request) prepareRequest(
 }
 
 func (r *Request) Get(uri string, headers ...http.Header) *Response {
-
-	return r.Do("GET", uri, headers...)
+	return r.Do(http.MethodGet, uri, headers...)
 }
 
-func (r *Request) Post(
-	uri string, headers ...http.Header) *Response {
-
-	return r.Do("POST", uri, headers...)
+func (r *Request) Post(uri string, headers ...http.Header) *Response {
+	return r.Do(http.MethodPost, uri, headers...)
 }
 
 func (r *Request) Put(uri string, headers ...http.Header) *Response {
-	return r.Do("PUT", uri, headers...) // with body, output body
+	return r.Do(http.MethodPut, uri, headers...) // with body, output body
 }
 
 func (r *Request) Patch(uri string, headers ...http.Header) *Response {
-	return r.Do("PATCH", uri, headers...) // with body, output body
+	return r.Do(http.MethodPatch, uri, headers...) // with body, output body
 }
 
 func (r *Request) Delete(uri string, headers ...http.Header) *Response {
-	return r.Do("DELETE", uri, headers...) // can have a body, output body
+	return r.Do(http.MethodDelete, uri, headers...) // may have a body, output body
 }
 
 func (r *Request) Head(uri string) *Response {
-	return r.Do("HEAD", uri) // no body
+	return r.Do(http.MethodHead, uri) // no body
 }
 
 func (r *Request) Trace(uri string) *Response {
-	return r.Do("TRACE", uri) // no body
+	return r.Do(http.MethodTrace, uri) // no body
 }
 
 func (r *Request) Options(uri string) *Response {
-	return r.Do("OPTIONS", uri) // no body
+	return r.Do(http.MethodOptions, uri) // no body
 }
 
 func (r *Request) Connect(uri string) *Response {
-	return r.Do("CONNECT", uri) // no body
+	return r.Do(http.MethodConnect, uri) // no body
 }
 
-func (r *Request) Do(method string,
-	uri string, headers ...http.Header) *Response {
-
+func (r *Request) Do(method string, uri string, headers ...http.Header) *Response {
 	var err error
+
 	defer closeReader(r.body)
+
 	if r.err != nil {
-		return &Response{nil, nil, nil}
+		return &Response{nil, r.err, nil}
 	}
 
 	r.prepareRequest(method, uri, headers...)
 	r.prepareCookies()
 	if r.err != nil {
-		return &Response{nil, nil, nil}
+		return &Response{nil, r.err, nil}
 	}
 
 	resp, err := r.client.Do(r.Request)
 
-	return &Response{resp, err, nil}
+	return &Response{
+		Response: resp,
+		err:      err,
+		content:  nil,
+	}
 }
 
 func (r *Request) With(params *url.Values, data *url.Values) *Request {
@@ -217,8 +205,7 @@ func (r *Request) AttachFile(reader io.Reader, contentType ...string) *Request {
 		return r
 	}
 
-	body := &bytes.Buffer{}
-
+	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 
 	if part, err = CreateFormFile(
@@ -242,7 +229,6 @@ func (r *Request) AttachFile(reader io.Reader, contentType ...string) *Request {
 }
 
 func (r *Request) AttachFiles(files map[string][]interface{}) *Request {
-
 	var (
 		err         error
 		fileName    string
@@ -250,9 +236,10 @@ func (r *Request) AttachFiles(files map[string][]interface{}) *Request {
 		part        io.Writer
 	)
 
-	body := &bytes.Buffer{}
-
+	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
+
+	var closeReaders []io.Reader
 
 	for field, values := range files {
 		if len(values) == 0 {
@@ -275,14 +262,11 @@ func (r *Request) AttachFiles(files map[string][]interface{}) *Request {
 
 		if f, ok := reader.(*os.File); ok {
 			fileName = filepath.Base(f.Name())
-			defer func(reader io.Reader) {
-				closeReader(reader)
-			}(reader)
+			closeReaders = append(closeReaders, f)
 
 			if part, err = CreateFormFile(
 				writer, field, fileName, contentType); err != nil {
 				r.err = err
-				//closeReader(reader)
 				continue
 			}
 		} else {
@@ -295,13 +279,15 @@ func (r *Request) AttachFiles(files map[string][]interface{}) *Request {
 			r.err = err
 			continue
 		}
-
-		//closeReader(reader)
 	}
 
 	r.mime = writer.FormDataContentType()
 	writer.Close()
 	r.body = body
+
+	for _, reader := range closeReaders {
+		closeReader(reader)
+	}
 
 	return r
 }
