@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	//"fmt"
-	//"golang.org/x/net/html/charset"
 	"github.com/softlandia/cpd"
 )
 
@@ -19,7 +17,7 @@ type Response struct {
 	content []byte
 }
 
-func (resp *Response) Error() error {
+func (resp Response) Error() error {
 	return resp.err
 }
 
@@ -27,6 +25,7 @@ func (resp *Response) Content() []byte {
 	if resp.content == nil {
 		resp.content = resp.readAll()
 	}
+
 	return resp.content
 }
 
@@ -37,37 +36,36 @@ func (resp *Response) Text() string {
 
 	return string(resp.content)
 }
-   
-func (resp *Response) ContentType(contentTypes ...string) (mime, charset string) {
+
+func (resp Response) ContentType(contentTypes ...string) (mime, charset string) {
 	var contentType string
-	
+
 	if len(contentTypes) > 0 {
 		contentType = contentTypes[0]
-	} else {    
+	} else {
 		contentType = resp.Header.Get("Content-Type")
 	}
-    cp := strings.Split(contentType, ";")
+
+	cp := strings.Split(contentType, ";")
 	mime = cp[0]
-    if len(cp) > 1 {
-        cp = strings.Split(cp[1], "=")
-        if len(cp) > 1 {
-            charset = strings.TrimSpace(cp[1])  
-        }
-    }
-    return 
+	if len(cp) > 1 {
+		cp = strings.Split(cp[1], "=")
+		if len(cp) > 1 {
+			charset = strings.TrimSpace(cp[1])
+		}
+	}
+	return
 }
 
-func (resp *Response) Mime(contentTypes ...string) (mime string) {
-    mime, _ = resp.ContentType(contentTypes...)
-    return  
-}
- 
-func (resp *Response) Charset(contentTypes ...string) (charset string) {
-    _, charset = resp.ContentType(contentTypes...)
-    return  
+func (resp Response) Mime(contentTypes ...string) (mime string) {
+	mime, _ = resp.ContentType(contentTypes...)
+	return mime
 }
 
-
+func (resp Response) Charset(contentTypes ...string) (charset string) {
+	_, charset = resp.ContentType(contentTypes...)
+	return charset
+}
 
 func (resp *Response) DetectCodePage() string {
 	if resp.content == nil {
@@ -77,7 +75,6 @@ func (resp *Response) DetectCodePage() string {
 	return cpd.CodepageAutoDetect(resp.content).String()
 }
 
-
 func (resp *Response) NewReader() (reader io.Reader) {
 	//reader, err := charset.NewReader(reader,resp.Header.Get("Content-Type"))
 	reader, err := cpd.NewReader(resp.Body) // need to be tested.
@@ -85,16 +82,14 @@ func (resp *Response) NewReader() (reader io.Reader) {
 		resp.err = err
 	}
 
-	return
+	return reader
 }
 
-func (resp *Response) Headers() http.Header {
-
+func (resp Response) Headers() http.Header {
 	return resp.Header
 }
 
 func (resp *Response) Json() (data map[string]interface{}) {
-
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "application/json" {
 		if resp.content == nil {
@@ -104,17 +99,19 @@ func (resp *Response) Json() (data map[string]interface{}) {
 			resp.err = err
 		}
 	}
-	return
+
+	return data
 }
 
-func (resp *Response) JSON() (data map[string]interface{}) {
+func (resp Response) JSON() (data map[string]interface{}) {
 	return resp.Json()
 }
 
 func (resp *Response) readAll(convertToUTF8 ...bool) (content []byte) {
-	var reader io.Reader
-	var err error
-	//contentType := resp.Header.Get("Content-Type")
+	var (
+		reader io.Reader
+		err    error
+	)
 	contentEncoding := resp.Header.Get("Content-Encoding")
 
 	switch contentEncoding {
@@ -122,7 +119,7 @@ func (resp *Response) readAll(convertToUTF8 ...bool) (content []byte) {
 		reader, err = gzip.NewReader(resp.Body)
 		if err != nil {
 			resp.err = err
-			return
+			return nil
 		}
 	default:
 		reader = resp.Body
@@ -130,7 +127,7 @@ func (resp *Response) readAll(convertToUTF8 ...bool) (content []byte) {
 
 	defer resp.Body.Close()
 
-	if len(convertToUTF8) > 0 && convertToUTF8[0] == true {
+	if len(convertToUTF8) > 0 && convertToUTF8[0] {
 		reader = resp.NewReader()
 	}
 
@@ -139,5 +136,5 @@ func (resp *Response) readAll(convertToUTF8 ...bool) (content []byte) {
 		resp.err = err
 	}
 
-	return
+	return content
 }
