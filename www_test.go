@@ -1,337 +1,337 @@
 package www
 
 import (
-    "net/http"
-    "net/http/cookiejar"
-    "net/url"
-    "strings"
-    "testing"
-    "time"
+	"fmt"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"strings"
+	"testing"
+	"time"
 )
 
 func TestWWW(t *testing.T) {
 
-    headers := http.Header{"User-Agent": {"Mozilla"}}
-    params := &url.Values{"key": {"value"}}
-    data := &url.Values{"key2": {"value2"}}
+	headers := http.Header{"User-Agent": {"Mozilla"}}
+	params := &url.Values{"key": {"value"}}
+	data := &url.Values{"key2": {"value2"}}
 
-    fileName := `utf-8.txt`
-    fileName2 := `utf-8(2).txt`
-    fileName3 := `windows-1251.txt`
-    filePath := `testdata\` + fileName
-    filePath2 := `testdata\` + fileName2
-    filePath3 := `testdata\` + fileName3
+	fileName := `utf-8.txt`
+	fileName2 := `utf-8(2).txt`
+	fileName3 := `windows-1251.txt`
+	filePath := `testdata/` + fileName
+	filePath2 := `testdata/` + fileName2
+	filePath3 := `testdata/` + fileName3
 
-    cl := NewClient().With(2 * time.Second)
+	cl := NewClient().With(2 * time.Second)
 
-    t.Run("DELETE", func(t *testing.T) {
+	t.Run("DELETE", func(t *testing.T) {
 
-        r := NewRequest(cl)
+		r := NewRequest(cl)
 
-        resp := r.Delete("https://httpbin.org/delete", http.Header{
-            "User-Agent": {"Mozilla"},
-            "Accept":     {"application/json"},
-        })
+		resp := r.Delete("https://httpbin.org/delete", http.Header{
+			"User-Agent": {"Mozilla"},
+			"Accept":     {"application/json"},
+		})
 
-        if resp.Error() != nil {
-            t.Errorf("%v", resp.Error())
-        } else {
-            if resp.StatusCode != 200 {
-                t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-            } else {
-                t.Logf("%s", resp.Status)
-                t.Logf("%s", resp.Json())
-                t.Logf("%s", r.Headers())
-            }
-        }
-    })
+		if resp.Error() != nil {
+			t.Errorf("%v", resp.Error())
+		} else {
+			if resp.StatusCode != 200 {
+				t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+			} else {
+				t.Logf("%s", resp.Status)
+				t.Logf("%s", resp.Json())
+				t.Logf("%s", r.Headers())
+			}
+		}
+	})
 
-    t.Run("PATCH", func(t *testing.T) {
+	t.Run("PATCH", func(t *testing.T) {
 
-        r := NewRequest(cl)
+		r := NewRequest(cl)
 
-        resp := r.Patch("https://httpbin.org/patch", http.Header{
-            "User-Agent": {"Mozilla"},
-            "Accept":     {"application/json"},
-        })
+		resp := r.Patch("https://httpbin.org/patch", http.Header{
+			"User-Agent": {"Mozilla"},
+			"Accept":     {"application/json"},
+		})
 
-        if resp.Error() != nil {
-            t.Errorf("%v", resp.Error())
-        } else {
-            if resp.StatusCode != 200 {
-                t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-            } else {
-                t.Logf("%s", resp.Status)
-                t.Logf("%s", resp.Json())
-                t.Logf("%s", r.Headers())
-            }
-        }
-    })
+		if resp.Error() != nil {
+			t.Errorf("%v", resp.Error())
+		} else {
+			if resp.StatusCode != 200 {
+				t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+			} else {
+				t.Logf("%s", resp.Status)
+				t.Logf("%s", resp.Json())
+				t.Logf("%s", r.Headers())
+			}
+		}
+	})
 
-    t.Run("PUT", func(t *testing.T) {
+	t.Run("PUT", func(t *testing.T) {
 
-        r := NewRequest(cl)
+		r := NewRequest(cl)
 
-        resp := r.Put("https://httpbin.org/put", http.Header{
-            "User-Agent": {"Mozilla"},
-            "Accept":     {"application/json"},
-        })
+		resp := r.Put("https://httpbin.org/put", http.Header{
+			"User-Agent": {"Mozilla"},
+			"Accept":     {"application/json"},
+		})
 
-        if resp.Error() != nil {
-            t.Errorf("%v", resp.Error())
-        } else {
-            if resp.StatusCode != 200 {
-                t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-            } else {
-                t.Logf("%s", resp.Status)
-                t.Logf("%s", resp.Json())
-                t.Logf("%s", r.Headers())
-            }
-        }
-    })
+		if resp.Error() != nil {
+			t.Errorf("%v", resp.Error())
+		} else {
+			if resp.StatusCode != 200 {
+				t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+			} else {
+				t.Logf("%s", resp.Status)
+				t.Logf("%s", resp.Json())
+				t.Logf("%s", r.Headers())
+			}
+		}
+	})
 
-    t.Run("GET", func(t *testing.T) {
+	t.Run("GET", func(t *testing.T) {
 
-        r := NewRequest(cl)
-        resp := r.WithQuery(params).
-            Get("https://httpbin.org/get", headers)
+		r := NewRequest(cl)
+		resp := r.WithQuery(params).
+			Get("https://httpbin.org/get", headers)
 
-        if resp.Error() != nil {
-            t.Errorf("%v", resp.Error())
-        } else {
-            if resp.StatusCode != 200 {
-                t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-            } else {
-                t.Logf("%s", resp.Status)
-                t.Logf("%s", resp.Text())
-                t.Logf("%s", r.Headers())
-            }
-        }
-    })
+		if resp.Error() != nil {
+			t.Errorf("%v", resp.Error())
+		} else {
+			if resp.StatusCode != 200 {
+				t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+			} else {
+				t.Logf("%s", resp.Status)
+				t.Logf("%s", resp.Text())
+				t.Logf("%s", r.Headers())
+			}
+		}
+	})
 
-    t.Run("POST", func(t *testing.T) {
+	t.Run("POST", func(t *testing.T) {
 
-        t.Run("FORM", func(t *testing.T) {
-            r := NewRequest(cl)
-            resp := r.WithQuery(params).
-                WithForm(data).
-                Post("https://httpbin.org/post", headers)
+		t.Run("FORM", func(t *testing.T) {
+			r := NewRequest(cl)
+			resp := r.WithQuery(params).
+				WithForm(data).
+				Post("https://httpbin.org/post", headers)
 
-            if resp.Error() != nil {
-                t.Errorf("%v", resp.Error())
-            } else {
-                if resp.StatusCode != 200 {
-                    t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-                } else {
-                    t.Logf("%s", resp.Status)
-                    t.Logf("%s", resp.Text())
-                    t.Logf("%s", r.Headers())
-                }
-            }
-        })
+			if resp.Error() != nil {
+				t.Errorf("%v", resp.Error())
+			} else {
+				if resp.StatusCode != 200 {
+					t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+				} else {
+					t.Logf("%s", resp.Status)
+					t.Logf("%s", resp.Text())
+					t.Logf("%s", r.Headers())
+				}
+			}
+		})
 
-        t.Run("JSON", func(t *testing.T) {
-            r := NewRequest(cl)
-            resp := r.WithQuery(params).
-                JSON(params).
-                Post("https://httpbin.org/post", headers)
+		t.Run("JSON", func(t *testing.T) {
+			r := NewRequest(cl)
+			resp := r.WithQuery(params).
+				JSON(params).
+				Post("https://httpbin.org/post", headers)
 
-            if resp.Error() != nil {
-                t.Errorf("%v", resp.Error())
-            } else {
-                if resp.StatusCode != 200 {
-                    t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-                } else {
-                    t.Logf("%s", resp.Status)
-                    t.Logf("%s", resp.Json())
-                    t.Logf("%s", r.Headers())
-                }
-            }
-        })
+			if resp.Error() != nil {
+				t.Errorf("%v", resp.Error())
+			} else {
+				if resp.StatusCode != 200 {
+					t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+				} else {
+					t.Logf("%s", resp.Status)
+					t.Logf("%s", resp.Json())
+					t.Logf("%s", r.Headers())
+				}
+			}
+		})
 
-        t.Run("FILE", func(t *testing.T) {
+		t.Run("FILE", func(t *testing.T) {
+			reader := MustOpen(filePath3)
 
-            reader := MustOpen(filePath3)
+			r := NewRequest(cl)
+			resp := r.WithQuery(params).
+				WithFile(reader).
+				Post("https://httpbin.org/post",
+					http.Header{"Content-Type": {"text/plain; charset=windows-1251"}},
+				)
 
-            r := NewRequest(cl)
-            resp := r.WithQuery(params).
-                WithFile(reader).
-                Post("https://httpbin.org/post",
-                    http.Header{"Content-Type": {"text/plain; charset=windows-1251"}},
-                )
+			if resp.Error() != nil {
+				t.Errorf("%v", resp.Error())
+			} else {
+				if resp.StatusCode != 200 {
+					t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+				} else {
+					t.Logf("%s", resp.Status)
+					t.Logf("%s", resp.Text())
+					t.Logf("%s", r.Headers())
+				}
+			}
+		})
 
-            if resp.Error() != nil {
-                t.Errorf("%v", resp.Error())
-            } else {
-                if resp.StatusCode != 200 {
-                    t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-                } else {
-                    t.Logf("%s", resp.Status)
-                    t.Logf("%s", resp.Text())
-                    t.Logf("%s", r.Headers())
-                }
-            }
-        })
+		t.Run("AttachFile", func(t *testing.T) {
 
-        t.Run("AttachFile", func(t *testing.T) {
+			r := NewRequest(cl)
+			resp := r.AttachFile(MustOpen(filePath), "text/plain; charset=utf-8").
+				Post("https://httpbin.org/post", headers)
 
-            r := NewRequest(cl)
-            resp := r.AttachFile(MustOpen(filePath), "text/plain; charset=utf-8").
-                Post("https://httpbin.org/post", headers)
+			if resp.Error() != nil {
+				t.Errorf("%v", resp.Error())
+			} else {
+				if resp.StatusCode != 200 {
+					t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+				} else {
+					t.Logf("%s", resp.Status)
+					t.Logf("%s", resp.Text())
+					t.Logf("%s", r.Headers())
+				}
+			}
+		})
 
-            if resp.Error() != nil {
-                t.Errorf("%v", resp.Error())
-            } else {
-                if resp.StatusCode != 200 {
-                    t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-                } else {
-                    t.Logf("%s", resp.Status)
-                    t.Logf("%s", resp.Text())
-                    t.Logf("%s", r.Headers())
-                }
-            }
-        })
+		t.Run("AttachFiles", func(t *testing.T) {
+			files := map[string][]interface{}{
+				"file":  {MustOpen(filePath), "text/plain; charset=utf-8"},
+				"file2": {MustOpen(filePath2), "text/plain; charset=utf-8"},
+				"other": {strings.NewReader("hello world!")},
+			}
 
-        t.Run("AttachFiles", func(t *testing.T) {
+			r := NewRequest(cl)
+			resp := r.AttachFiles(files).
+				Post("https://httpbin.org/post", headers)
 
-            files := map[string][]interface{}{
-                "file":  {MustOpen(filePath), "text/plain; charset=utf-8"},
-                "file2": {MustOpen(filePath2), "text/plain; charset=utf-8"},
-                "other": {strings.NewReader("hello world!")},
-            }
+			if resp.Error() != nil {
+				t.Errorf("%v", resp.Error())
+			} else {
+				if resp.StatusCode != 200 {
+					fmt.Println(t, resp)
+					t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+				} else {
+					t.Logf("%s", resp.Status)
+					t.Logf("%s", resp.Text())
+					t.Logf("%s", r.Headers())
+				}
+			}
+		})
 
-            r := NewRequest(cl)
-            resp := r.AttachFiles(files).
-                Post("https://httpbin.org/post", headers)
+	})
 
-            if resp.Error() != nil {
-                t.Errorf("%v", resp.Error())
-            } else {
-                if resp.StatusCode != 200 {
-                    t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-                } else {
-                    t.Logf("%s", resp.Status)
-                    t.Logf("%s", resp.Text())
-                    t.Logf("%s", r.Headers())
-                }
-            }
-        })
+	t.Run("COOKIES", func(t *testing.T) {
 
-    })
+		jar, _ := cookiejar.New(nil)
+		cl.WithJar(jar).SetCookies("https://httpbin.org/",
+			&http.Cookie{
+				Name:   "token",
+				Value:  "some_token",
+				MaxAge: 300,
+			},
+		)
+		r := NewRequest(cl)
 
-    t.Run("COOKIES", func(t *testing.T) {
+		cookies := []*http.Cookie{
+			{
+				Name:   "token1",
+				Value:  "some_token1",
+				MaxAge: 300,
+			},
 
-        jar, _ := cookiejar.New(nil)
-        cl.WithJar(jar).SetCookies("https://httpbin.org/",
-            &http.Cookie{
-                Name:   "token",
-                Value:  "some_token",
-                MaxAge: 300,
-            },
-        )
-        r := NewRequest(cl)
+			{
+				Name:   "token2",
+				Value:  "some_token2",
+				MaxAge: 300,
+			},
+		}
+		resp := r.SetCookies(cookies...).
+			Get("https://httpbin.org/cookies", headers)
 
-        cookies := []*http.Cookie{
-            {
-                Name:   "token1",
-                Value:  "some_token1",
-                MaxAge: 300,
-            },
+		if resp.Error() != nil {
+			t.Errorf("%v", resp.Error())
+		} else {
+			if resp.StatusCode != 200 {
+				t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+			} else {
+				t.Logf("%s", resp.Status)
+				t.Logf("%s", resp.Text())
+				t.Logf("%s", r.Cookies()) // returns the cookies that are sent with the header Cookie
+				t.Logf("%s", r.Headers().Get("Cookie"))
+			}
+		}
+	})
 
-            {
-                Name:   "token2",
-                Value:  "some_token2",
-                MaxAge: 300,
-            },
-        }
-        resp := r.SetCookies(cookies...).
-            Get("https://httpbin.org/cookies", headers)
+	t.Run("SET COOKIES", func(t *testing.T) {
 
-        if resp.Error() != nil {
-            t.Errorf("%v", resp.Error())
-        } else {
-            if resp.StatusCode != 200 {
-                t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-            } else {
-                t.Logf("%s", resp.Status)
-                t.Logf("%s", resp.Text())
-                t.Logf("%s", r.Cookies()) // returns the cookies that are sent with the header Cookie
-                t.Logf("%s", r.Headers().Get("Cookie"))
-            }
-        }
-    })
+		jar, _ := cookiejar.New(nil)
+		cl.WithJar(jar)
+		r := NewRequest(cl)
 
-    t.Run("SET COOKIES", func(t *testing.T) {
+		resp := r.WithQuery(&url.Values{"name": {"token"}}).
+			Get("https://httpbin.org/cookies/set", headers)
 
-        jar, _ := cookiejar.New(nil)
-        cl.WithJar(jar)
-        r := NewRequest(cl)
+		if resp.Error() != nil {
+			t.Errorf("%v", resp.Error())
+		} else {
+			if resp.StatusCode != 200 {
+				t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
+			} else {
+				t.Logf("%s", resp.Status)
+				t.Logf("%s", resp.Text())
+				t.Logf("%s", resp.Cookies()) // returns the cookies set in the Set-Cookie headers
+				t.Logf("%s", resp.Headers().Get("Set-Cookie"))
+			}
+		}
+	})
 
-        resp := r.WithQuery(&url.Values{"name": {"token"}}).
-            Get("https://httpbin.org/cookies/set", headers)
+	t.Run("GITHUB", func(t *testing.T) {
 
-        if resp.Error() != nil {
-            t.Errorf("%v", resp.Error())
-        } else {
-            if resp.StatusCode != 200 {
-                t.Errorf("StatusCode:got %d, want 200", resp.StatusCode)
-            } else {
-                t.Logf("%s", resp.Status)
-                t.Logf("%s", resp.Text())
-                t.Logf("%s", resp.Cookies()) // returns the cookies set in the Set-Cookie headers
-                t.Logf("%s", resp.Headers().Get("Set-Cookie"))
-            }
-        }
-    })
+		client := NewClient()
+		client.WithTimeout(2 * time.Second)
+		jar, _ := cookiejar.New(nil)
+		client.WithJar(jar)
 
-    t.Run("GITHUB", func(t *testing.T) {
-
-        client := NewClient()
-        client.WithTimeout(2 * time.Second)
-        jar, _ := cookiejar.New(nil)
-        client.WithJar(jar)
-
-        req := NewRequest(client)
-        req.SetCookies(&http.Cookie{
-            Name:   "Garry",
-            Value:  "Galler",
-            MaxAge: 300,
-        })
-        req.WithQuery(&url.Values{"q": {"generics"}, "l": {"go"}, "type": {"topics"}})
-        resp := req.Get("https://github.com/search",
-            http.Header{
-                "User-Agent": {"Mozilla"},
-                //"Accept": {"application/vnd.github.v3+json"},
-                //"Authorization": {"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}},
-            })
-        t.Logf("%s", resp.Status)
-        t.Logf("%s", resp.Headers())
-    })
+		req := NewRequest(client)
+		req.SetCookies(&http.Cookie{
+			Name:   "Garry",
+			Value:  "Galler",
+			MaxAge: 300,
+		})
+		req.WithQuery(&url.Values{"q": {"generics"}, "l": {"go"}, "type": {"topics"}})
+		resp := req.Get("https://github.com/search",
+			http.Header{
+				"User-Agent": {"Mozilla"},
+				//"Accept": {"application/vnd.github.v3+json"},
+				//"Authorization": {"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}},
+			})
+		t.Logf("%s", resp.Status)
+		t.Logf("%s", resp.Headers())
+	})
 
 }
 
 func BenchmarkWWW(b *testing.B) {
 
-    headers := http.Header{"User-Agent": {"Mozilla"}}
+	headers := http.Header{"User-Agent": {"Mozilla"}}
 
-    fileName := `utf-8.txt`
-    filePath := `testdata\` + fileName
+	fileName := `utf-8.txt`
+	filePath := `testdata\` + fileName
 
-    cl := NewClient().WithTimeout(2 * time.Second)
+	cl := NewClient().WithTimeout(2 * time.Second)
 
-    b.RunParallel(func(pb *testing.PB) {
+	b.RunParallel(func(pb *testing.PB) {
 
-        for pb.Next() {
+		for pb.Next() {
 
-            r := NewRequest(cl)
-            resp := r.AttachFile(MustOpen(filePath)).
-                Post("https://httpbin.org/post", headers)
+			r := NewRequest(cl)
+			resp := r.AttachFile(MustOpen(filePath)).
+				Post("https://httpbin.org/post", headers)
 
-            if resp.Error() != nil {
-                b.Errorf("%v\n", resp.Error())
-            } else {
-                b.Logf("status:%s", resp.Status)
-            }
-        }
-    })
+			if resp.Error() != nil {
+				b.Errorf("%v\n", resp.Error())
+			} else {
+				b.Logf("status:%s", resp.Status)
+			}
+		}
+	})
 }
