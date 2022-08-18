@@ -31,10 +31,10 @@ func closeReader(r io.Reader, verbose ...bool) bool {
 	return ok
 }
 
-var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+var quoteEscapists = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 
 func escapeQuotes(s string) string {
-	return quoteEscaper.Replace(s)
+	return quoteEscapists.Replace(s)
 }
 
 func CreateFormFile(w *multipart.Writer,
